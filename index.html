@@ -1,1 +1,114 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Мои накопления</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f2f5f3;color:#20352c;font-family:Arial,sans-serif}
+header{background:#176b4d;color:white;padding:24px 20px;border-radius:0 0 24px 24px}
+header h1{margin:0 0 8px;font-size:27px}
+main{padding:16px;max-width:520px;margin:auto}
+.card{background:white;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 3px 12px #173b2410}
+.big{font-size:30px;font-weight:bold;margin:10px 0}
+.muted{color:#708078;font-size:14px}
+.bar{height:12px;background:#e3eae5;border-radius:10px;overflow:hidden;margin:14px 0}
+.fill{height:100%;width:0;background:#20a56e;transition:.2s}
+label{display:block;margin:12px 0 5px;font-size:14px}
+input[type=number]{width:100%;padding:12px;border:1px solid #d5dfd9;border-radius:10px;font-size:16px}
+.month{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #edf0ee}
+.month:last-child{border:0}
+.month input{width:22px;height:22px;accent-color:#168458}
+.month div{flex:1}
+nav{display:flex;gap:8px;margin-bottom:14px}
+nav button{flex:1;border:0;padding:12px 5px;border-radius:12px;background:#dfe9e2;color:#24533d;font-weight:bold}
+nav button.active{background:#176b4d;color:white}
+.page{display:none}.page.active{display:block}
+.note{font-size:13px;color:#718077;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+<h1>🌱 Мои накопления</h1>
+<div>Шаг за шагом к твоей цели</div>
+</header>
+<main>
+<nav>
+<button class="active" onclick="show('home',this)">Главная</button>
+<button onclick="show('plan',this)">Мой план</button>
+<button onclick="show('budget',this)">Бюджет</button>
+</nav>
+
+<section id="home" class="page active">
+<div class="card">
+<div class="muted">Моя цель</div>
+<div class="big" id="goalText">200 000 ₽</div>
+<div class="muted">Уже накоплено</div>
+<div class="big" id="savedText">0 ₽</div>
+<div class="bar"><div class="fill" id="fill"></div></div>
+<strong id="percent">0%</strong>
+<div class="muted" id="leftText">Осталось 200 000 ₽</div>
+</div>
+<div class="card">
+<h3>📅 План на месяц</h3>
+<div class="big" id="monthlyText">16 667 ₽</div>
+<div class="muted">Ориентировочный взнос для достижения цели в срок</div>
+</div>
+<div class="card">
+<h3>🏆 Твой прогресс</h3>
+<div id="countText">Отмечено месяцев: 0 из 12</div>
+<div class="note">Отмечай месяц после того, как действительно отложишь деньги.</div>
+</div>
+</section>
+
+<section id="plan" class="page">
+<div class="card">
+<h3>Мои ежемесячные взносы</h3>
+<div class="note">Поставь галочку после внесения денег. Сумма отмеченных взносов прибавляется к накоплениям.</div>
+<div id="months"></div>
+</div>
+</section>
+
+<section id="budget" class="page">
+<div class="card">
+<h3>⚙️ Настройки цели</h3>
+<label>Цель, ₽</label><input id="goal" type="number" min="1" value="200000">
+<label>Уже накоплено, ₽</label><input id="saved" type="number" min="0" value="0">
+<label>Срок, месяцев</label><input id="duration" type="number" min="1" max="120" value="12">
+<button style="margin-top:14px;width:100%;padding:13px;background:#176b4d;color:white;border:0;border-radius:10px" onclick="saveSettings()">Сохранить цель</button>
+</div>
+<div class="card">
+<h3>💰 Мой бюджет в месяц</h3>
+<label>Зарплата, ₽</label><input id="salary" type="number" value="50000">
+<label>Аренда и коммунальные, ₽</label><input id="rent" type="number" value="20000">
+<label>Еда и бытовые расходы, ₽</label><input id="food" type="number" value="15000">
+<label>Прочие расходы, ₽</label><input id="other" type="number" value="5000">
+<div class="bar"><div class="fill" id="budgetFill"></div></div>
+<div id="budgetText"></div>
+<button style="margin-top:14px;width:100%;padding:13px;background:#176b4d;color:white;border:0;border-radius:10px" onclick="saveBudget()">Сохранить бюджет</button>
+</div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const get=(k,d)=>{try{let v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}};
+let data=get('mySavings',{goal:200000,saved:0,duration:12,months:[],salary:50000,rent:20000,food:15000,other:5000});
+function money(n){return Math.round(n).toLocaleString('ru-RU')+' ₽'}
+function show(id,btn){
+document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+$(id).classList.add('active');
+document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+btn.classList.add('active');
+}
+function persist(){localStorage.setItem('mySavings',JSON.stringify(data))}
+function render(){
+let count=data.months.filter(Boolean).length;
+let monthly=Math.max(0,(data.goal-data.saved)/data.duration);
+let total=data.saved+count*monthly;
+let pct=Math.min(100,total/data.goal*100);
+$('goalText').textContent=money(data.goal);
+$('savedText').textContent=money(total);
+$('fill').style.width=pct+'%';
+$('percent').textContent=Math
